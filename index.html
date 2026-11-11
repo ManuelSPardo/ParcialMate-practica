@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Parcial 3">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#1f5fa8">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icono.png">
+<title>Parcial 3 · Práctica</title>
+<style>
+/* Una columna para el celular. Sin fuentes ni recursos externos: funciona sin internet. */
+:root{
+  --bg:#f5f7fa; --paper:#fff; --ink:#17202c; --muted:#5b6778; --line:#d3dbe6;
+  --accent:#1f5fa8; --accent-soft:#e6eef9; --ok:#1e7a4c; --ok-soft:#e3f3ea; --bad:#b3372f; --bad-soft:#fbe9e7; --warn:#8a5a00; --warn-soft:#fff4dc;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#10151d; --paper:#18202b; --ink:#e7edf5; --muted:#9aa7b8; --line:#2c3848;
+  --accent:#7fb0ec; --accent-soft:#1d2c40; --ok:#6fcf9b; --ok-soft:#173226; --bad:#f08a80; --bad-soft:#3a1d1b; --warn:#f0c060; --warn-soft:#3a2f12; color-scheme:dark}}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-text-size-adjust:100%}
+.wrap{max-width:640px;margin:0 auto;padding:max(14px,env(safe-area-inset-top)) max(14px,env(safe-area-inset-right)) calc(28px + env(safe-area-inset-bottom)) max(14px,env(safe-area-inset-left));display:flex;flex-direction:column;gap:12px}
+h1{font-size:1.5rem;margin:4px 0 0}
+h2{font-size:1.15rem;margin:0}
+p{margin:0}
+.muted{color:var(--muted);font-size:.9rem}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px}
+button{font:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.btn{font-weight:600;border-radius:12px;padding:13px 16px;border:1.5px solid var(--accent);background:var(--accent);color:#fff;width:100%}
+.btn.ghost{background:transparent;color:var(--accent)}
+.btn:disabled{opacity:.45}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.row>.btn{flex:1 1 140px}
+.chip{border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:999px;padding:7px 12px;font-size:.88rem}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.tag{display:inline-block;font-size:.78rem;font-weight:600;color:var(--accent);background:var(--accent-soft);border-radius:6px;padding:2px 8px}
+.enun{background:var(--accent-soft);border-radius:10px;padding:10px 12px;font-size:.95rem}
+.q{font-weight:600}
+.f{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.92em;white-space:nowrap}
+input[type=text]{font:600 1.15rem ui-monospace,Menlo,Consolas,monospace;width:100%;padding:12px;border:1.5px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink)}
+.unit{color:var(--muted);font-size:.9rem}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opt{display:flex;gap:10px;align-items:flex-start;border:1.5px solid var(--line);border-radius:10px;padding:11px 12px;background:var(--paper);color:var(--ink);text-align:left;width:100%}
+.opt[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.opt.ok{border-color:var(--ok);background:var(--ok-soft)}
+.opt.bad{border-color:var(--bad);background:var(--bad-soft)}
+.fb{border-radius:10px;padding:10px 12px;font-size:.95rem}
+.fb.ok{background:var(--ok-soft);border-left:4px solid var(--ok)}
+.fb.bad{background:var(--bad-soft);border-left:4px solid var(--bad)}
+.fb.warn{background:var(--warn-soft);border-left:4px solid var(--warn)}
+.fb strong{display:block;margin-bottom:2px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.clock{font:700 1.05rem ui-monospace,Menlo,Consolas,monospace}
+table{width:100%;border-collapse:collapse;font-size:.88rem}
+td,th{padding:6px 4px;border-bottom:1px solid var(--line);text-align:left}
+td.n{text-align:right;font-variant-numeric:tabular-nums}
+.bar{height:6px;background:var(--line);border-radius:3px;overflow:hidden}
+.bar>i{display:block;height:100%;background:var(--accent)}
+.score{font-size:2rem;font-weight:700}
+details summary{cursor:pointer;color:var(--accent);font-weight:600}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+
+<script>
+/*GEN*/
+const ln=Math.log, exp=Math.exp, sq=Math.sqrt, PI=Math.PI;
+const R=a=>a[Math.floor(Math.random()*a.length)];
+const f=t=>`<span class="f">${t}</span>`;
+function n(v,d=4){
+  if(!isFinite(v)) return "—";
+  const a=Math.abs(v);
+  if(a!==0&&(a<1e-3||a>=1e6)){ let [m,e]=v.toExponential(3).split("e"); return String(+m).replace("-","−")+"×10^"+(+e); }
+  return String(+v.toFixed(d)).replace("-","−");
+}
+function mcq(correct,wrong){
+  const all=[correct,...wrong], idx=all.map((_,i)=>i);
+  for(let i=idx.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1)); [idx[i],idx[j]]=[idx[j],idx[i]];}
+  return {o:idx.map(i=>all[i]), a:idx.indexOf(0)};
+}
+function pickN(arr,k){const c=arr.slice(),out=[];while(out.length<k&&c.length)out.push(c.splice(Math.floor(Math.random()*c.length),1)[0]);return out;}
+const LAB=['1a','1b','2a','2b','3','4a','4b','5','6a','6b','7','8a','8b'];
+const CLS=["Nodo estable","Foco estable","Silla","Foco inestable"];
+function clasif(tr,det,D){
+  if(det<0) return {a:2,x:"D < 0: silla."};
+  if(tr<0) return D>0?{a:0,x:"D > 0 y T < 0: estable. Δ > 0: nodo, no oscila."}:{a:1,x:"D > 0 y T < 0: estable. Δ < 0: foco, oscila."};
+  return {a:3,x:"D > 0 y T > 0: inestable."};
+}
+function seg(min){ return min<1 ? `${n(min*60,0)} segundos` : `${n(min)} minutos`; }
+/* cada pregunta: {k (tipo), q, v|o,a, u, x} ; el ejercicio reparte 13 preguntas en 8 pasos */
+function armar(id,nombre,e,qs){ return {id,nombre,e,qs:qs.map((q,i)=>Object.assign({paso:LAB[i]},q))}; }
+
+/* ===== 1. Balance 1×1 ===== */
+function gBal(){
+  const V=R([20,25,40,50]), k=R([0.1,0.2,0.25,0.5]), Co=R([4,5,6,8]);
+  const lo=Co-R([1,2]), hi=Co+R([2,3]);
+  const Rok=k*V*Co, Rg=+(k*V*R([3,7,10])).toFixed(2), Rerr=Rok*R([0.5,2]);
+  const Ce=Rerr/(k*V), C0=hi+R([1,2]);
+  const Cb=R([1,1.2,1.5]), kl=R([0.04,0.05,0.1]), p=kl*Cb, aE=R([0.1,0.2,0.24,0.3]), Cm=R([3,4,5]);
+  const est=Ce<lo?0:Ce>hi?2:1;
+  const vOpts=["Por debajo de la ventana","Dentro de la ventana","Por encima de la ventana"];
+  const m1=mcq("h⁻¹",["mg/h","L/h","mg/L"]), m2=mcq("C′ = R/V − kC",["C′ = R − kC","C′ = R/V − kC/V","C′ = R·V − kC"]);
+  const e=`Parte A. Una bomba administra un antibiótico por vía IV a una tasa constante R (mg/h). Se distribuye en V = ${V} L y el organismo lo elimina a una tasa proporcional a la cantidad presente Q, con constante k = ${k} h⁻¹. La ventana terapéutica va de ${lo} a ${hi} mg/L y la concentración objetivo es ${Co} mg/L.<br>Parte B. En reposo el lactato está estable en ${Cb} mmol/L; el organismo lo produce a tasa constante p y lo remueve con constante ${kl} min⁻¹. Un ejercicio agrega una producción extra a(t).`;
+  return armar("bal","Balance 1×1",e,[
+    {k:"unidades",q:"¿Cuáles son las unidades de k?",o:m1.o,a:m1.a,x:"En Q′ = R − kQ, kQ debe tener las unidades de Q′ (mg/h). Como Q va en mg, k va en h⁻¹."},
+    {k:"ecuacion",q:"Si C = Q/V, ¿qué ecuación sigue la concentración?",o:m2.o,a:m2.a,x:"Se divide Q′ = R − kQ entre V: C′ = R/V − kC. La tasa k no cambia."},
+    {k:"equilibrio",q:`Si la bomba se programa a R = ${n(Rg)} mg/h, ¿cuál es la concentración de equilibrio?`,v:Rg/(k*V),u:"mg/L",x:`En equilibrio C′ = 0: C* = R/(kV) = ${n(Rg)}/(${k}·${V}) = ${n(Rg/(k*V))}.`},
+    {k:"tmedio",q:"¿Cuánto tarda la concentración en recorrer la mitad del camino hacia su equilibrio?",v:ln(2)/k,u:"h",x:`Es lineal con tasa k: t½ = ln2/k = 0.693/${k} = ${n(ln(2)/k)} h.`},
+    {k:"Robjetivo",q:"¿Qué tasa R debe programarse para alcanzar la concentración objetivo?",v:Rok,u:"mg/h",x:`R = k·V·C* = ${k}·${V}·${Co} = ${n(Rok)}.`},
+    {k:"error",q:`Por un error, la bomba queda en R = ${n(Rerr)} mg/h. ¿Cuál es el nuevo equilibrio?`,v:Ce,u:"mg/L",x:`C* = ${n(Rerr)}/(${k}·${V}) = ${n(Ce)}.`},
+    {k:"ventana",q:`Con C* = ${n(Ce)} mg/L, ¿dónde queda respecto a la ventana de ${lo} a ${hi} mg/L?`,o:vOpts,a:est,x:`${n(Ce)} se compara con ${lo} y ${hi}.`},
+    {k:"derivada0",q:`Con la tasa correcta R = ${n(Rok)} mg/h y C(0) = 0, ¿cuánto vale C′(0)?`,v:Rok/V,u:"mg/L/h",x:`Se reemplaza, no se iguala a cero: C′(0) = R/V − k·0 = ${n(Rok)}/${V} = ${n(Rok/V)}. Positiva: sube.`},
+    {k:"derivadaAlta",q:`Con R = ${n(Rok)} mg/h, tras una dosis de carga C(0) = ${C0} mg/L. ¿Cuánto vale C′(0)?`,v:Rok/V-k*C0,u:"mg/L/h",x:`C′(0) = ${n(Rok)}/${V} − ${k}·${C0} = ${n(Rok/V-k*C0)}. Negativa: baja hacia C*.`},
+    {k:"basal",q:"Parte B. ¿Cuánto vale la producción basal p?",v:p,u:"mmol/L/min",x:`En reposo C′ = 0: p = k·Cb = ${kl}·${Cb} = ${n(p)}.`},
+    {k:"inicioEj",q:`Parte B. Al empezar un ejercicio con a = ${aE} mmol/L/min, estando en el basal, ¿cuánto vale C′ en ese instante?`,v:aE,u:"mmol/L/min",x:`C′ = a + p − kCb, y p − kCb = 0 en el basal, así que C′ = a = ${aE}.`},
+    {k:"eqEj",q:`Parte B. Si ese ejercicio (a = ${aE}) continuara indefinidamente, ¿a qué equilibrio llegaría? Use p = ${n(p)}.`,v:(aE+p)/kl,u:"mmol/L",x:`0 = a + p − kC: C* = (${aE} + ${n(p)})/${kl} = ${n((aE+p)/kl)}.`},
+    {k:"amax",q:`Parte B. ¿Cuál es el mayor a constante que garantiza que el lactato nunca supere ${Cm} mmol/L? Use p = ${n(p)}.`,v:kl*Cm-p,u:"mmol/L/min",x:`El equilibrio (a + p)/k no debe superar ${Cm}: a = k·${Cm} − p = ${kl}·${Cm} − ${n(p)} = ${n(kl*Cm-p)}.`}
+  ]);
+}
+
+/* ===== 2. Farmacocinética IV y oral ===== */
+function gPK(){
+  const Vd=R([10,20,25,40,50]), Div=R([100,200,250,500]), C0=Div/Vd, th=R([2,3,4,5,6,8]), m=R([1,2,3]);
+  const dt=th*m, C2=C0/2**m, ke=ln(2)/th, CL=ke*Vd, AUC=Div/CL;
+  const tq=R([1,2,3,5]), Cq=C0*exp(-ke*tq), fr=R([0.1,0.2,0.25]), Cth=C0*fr, tth=ln(1/fr)/ke;
+  const Do=R([200,300,400,500]), F=R([0.5,0.6,0.75,0.8]), AUCo=F*Do/CL, ka=R([0.8,1,1.5,2]);
+  const tm=ln(ka/ke)/(ka-ke), Cm=F*Do/Vd*exp(-ke*tm);
+  const CO=["t½ y AUC se duplican","t½ se duplica y AUC no cambia","t½ no cambia y AUC baja a la mitad","t½ y AUC bajan a la mitad"];
+  const conc=R([{q:"CL cae a la mitad sin cambiar Vd",a:0,t:2*th,x:"t½ = ln2·Vd/CL y AUC = F·D/CL: los dos tienen CL abajo."},
+    {q:"Vd se duplica sin cambiar CL",a:1,t:2*th,x:"t½ = ln2·Vd/CL se duplica; AUC no tiene Vd."},
+    {q:"F cae a la mitad",a:2,t:th,x:"t½ no tiene F; AUC = F·D/CL baja a la mitad."}]);
+  const e=`Un fármaco tiene eliminación de primer orden. Con un bolo IV de ${Div} mg se extrapola C(0) = ${n(C0)} mg/L, y ${n(dt)} horas después la concentración es ${n(C2)} mg/L. En otro ensayo se dan ${Do} mg por vía oral con absorción de primer orden, κa = ${ka} h⁻¹, y se mide un AUC oral de ${n(AUCo,2)} mg·h/L.`;
+  return armar("pk","Farmacocinética IV y oral",e,[
+    {k:"Vd",q:"Calcule el volumen de distribución Vd.",v:Vd,u:"L",x:`Vd = Dosis/C(0) = ${Div}/${n(C0)} = ${Vd}.`},
+    {k:"ke",q:"Calcule la constante de eliminación κe.",v:ke,u:"h⁻¹",x:`κe = ln(C₀/C)/Δt = ln(${n(C0)}/${n(C2)})/${n(dt)} = ${n(ke)}. Atajo: son ${m} vidas medias en ${n(dt)} h.`},
+    {k:"thalf",q:`Use κe = ${n(ke)} h⁻¹. Calcule la vida media.`,v:th,u:"h",x:`t½ = ln2/κe = 0.693/${n(ke)} = ${th}.`},
+    {k:"CL",q:`Use κe = ${n(ke)} h⁻¹ y Vd = ${Vd} L. Calcule el aclaramiento CL.`,v:CL,u:"L/h",x:`CL = κe·Vd = ${n(ke)}·${Vd} = ${n(CL)}.`},
+    {k:"AUCiv",q:`Use CL = ${n(CL)} L/h. Calcule el AUC del bolo IV.`,v:AUC,u:"mg·h/L",x:`AUC = D/CL = ${Div}/${n(CL)} = ${n(AUC,2)}.`},
+    {k:"AUC2",q:`Si la dosis IV se duplica (${2*Div} mg), ¿cuál es el nuevo AUC? Use CL = ${n(CL)} L/h.`,v:2*AUC,u:"mg·h/L",x:`AUC es proporcional a la dosis: ${2*Div}/${n(CL)} = ${n(2*AUC,2)}.`},
+    {k:"Ct",q:`¿Cuál es la concentración ${tq} horas después del bolo IV? Use κe = ${n(ke)} h⁻¹.`,v:Cq,u:"mg/L",x:`C(t) = C₀·e^(−κe·t) = ${n(C0)}·e^(−${n(ke*tq)}) = ${n(Cq)}.`},
+    {k:"tUmbral",q:`¿Cuánto tarda la concentración del bolo IV en bajar a ${n(Cth)} mg/L? Use κe = ${n(ke)} h⁻¹.`,v:tth,u:"h",x:`t = ln(C₀/C)/κe = ln(${n(C0)}/${n(Cth)})/${n(ke)} = ${n(tth)}.`},
+    {k:"F",q:`Use AUC IV = ${n(AUC,2)} mg·h/L. Calcule la biodisponibilidad oral F.`,v:F,u:"",x:`F = (AUC oral/D oral)/(AUC IV/D IV) = (${n(AUCo,2)}/${Do})/(${n(AUC,2)}/${Div}) = ${F}.`},
+    {k:"tmax",q:`Use κe = ${n(ke)} h⁻¹. Calcule t_máx de la dosis oral.`,v:tm,u:"h",x:`t_máx = ln(κa/κe)/(κa − κe) = ln(${n(ka/ke)})/${n(ka-ke)} = ${n(tm,3)}.`},
+    {k:"Cmax",q:`Use F = ${F}, Vd = ${Vd} L, κe = ${n(ke)} h⁻¹ y t_máx = ${n(tm,3)} h. Calcule C_máx oral.`,v:Cm,u:"mg/L",x:`C_máx = (F·D/Vd)·e^(−κe·t_máx) = ${n(F*Do/Vd)}·e^(−${n(ke*tm)}) = ${n(Cm,3)}.`},
+    {k:"concepto",q:`Si ${conc.q} (lo demás igual), ¿qué pasa?`,o:CO,a:conc.a,x:conc.x},
+    {k:"thNueva",q:`En ese mismo caso (${conc.q}), ¿cuál es la nueva vida media? La original es ${th} h.`,v:conc.t,u:"h",x:`${conc.x} Nueva t½ = ${conc.t} h.`}
+  ]);
+}
+
+/* ===== 3. Dosis repetidas IV ===== */
+function gDosis(){
+  let D,Vd,th,m1,m2,t1,t2,ke,a1,a2,c,M1,mn1,M2,mn2,lo,hi;
+  for(;;){
+    D=R([100,200,300,400,500]); Vd=R([20,25,40,50]); th=R([4,6,8,12]);
+    m1=R([1,1.5,2,3]); m2=R([0.5,1,1.5,2,3].filter(x=>x!==m1)); t1=th*m1; t2=th*m2;
+    ke=ln(2)/th; a1=exp(-ke*t1); a2=exp(-ke*t2); c=D/Vd;
+    M1=c/(1-a1); mn1=a1*M1; M2=c/(1-a2); mn2=a2*M2;
+    const nice=x=>x<10?Math.round(x*2)/2:Math.round(x);
+    lo=nice(Math.min(mn1,mn2)*R([.6,.9,1.1,1.5])); hi=nice(Math.max(M1,M2)*R([.75,.9,1.1,1.3]));
+    if(lo<=0||lo>=hi) continue;
+    const close=(p,q)=>Math.abs(p-q)<.06*q;
+    if([mn1,mn2].some(z=>close(z,lo))||[M1,M2].some(z=>close(z,hi))) continue;
+    break;
+  }
+  const in1=mn1>=lo&&M1<=hi, in2=mn2>=lo&&M2<=hi, ans=in1&&in2?2:in1?0:in2?1:3;
+  const opts=[`Solo cada ${t1} h`,`Solo cada ${t2} h`,"Los dos","Ninguno"];
+  const eq=mcq("C(n+1) = α·C(n) + D/Vd",["C(n+1) = α·C(n) − D/Vd","C(n+1) = −κe·C(n) + D/Vd","C(n+1) = C(n) + D/Vd"]);
+  const tgt=Math.max(0.5,Math.round(mn1*R([1.5,2]))), Dn=tgt*Vd*(1-a1)/a1;
+  const e=`Se administran bolos IV de D = ${D} mg cada τ = ${t1} h. Vd = ${Vd} L y la vida media es ${th} h. La ventana terapéutica va de ${lo} a ${hi} mg/L. No había fármaco antes de la primera dosis.`;
+  return armar("dosis","Dosis repetidas",e,[
+    {k:"ke",q:"Calcule κe.",v:ke,u:"h⁻¹",x:`κe = ln2/t½ = 0.693/${th} = ${n(ke)}.`},
+    {k:"alfa",q:"Calcule α = e^(−κe·τ), la fracción que queda de una dosis a la siguiente.",v:a1,u:"",x:`En τ = ${t1} h caben ${m1} vidas medias: α = (½)^${m1} = ${n(a1)}.`},
+    {k:"DVd",q:"¿Cuánto sube la concentración con cada bolo?",v:c,u:"mg/L",x:`D/Vd = ${D}/${Vd} = ${n(c)}.`},
+    {k:"Cmin1",q:`Use α = ${n(a1)}. ¿Cuál es la concentración justo antes de la segunda dosis?`,v:a1*c,u:"mg/L",x:`Queda α de la primera: ${n(a1)}·${n(c)} = ${n(a1*c)}.`},
+    {k:"Cmax2",q:`Use α = ${n(a1)}. ¿Cuál es el pico justo después de la segunda dosis?`,v:a1*c+c,u:"mg/L",x:`C₂ = α·C₁ + D/Vd = ${n(a1*c)} + ${n(c)} = ${n(a1*c+c)}.`},
+    {k:"recurrencia",q:"¿Qué ecuación relaciona un pico con el siguiente?",o:eq.o,a:eq.a,x:"Queda la fracción α del pico anterior y el bolo suma D/Vd. El bolo suma: signo +."},
+    {k:"Cmaxss",q:`Use α = ${n(a1)}. ¿Cuál es el pico en estado estacionario?`,v:M1,u:"mg/L",x:`C_máx = (D/Vd)/(1 − α) = ${n(c)}/${n(1-a1)} = ${n(M1)}.`},
+    {k:"Cminss",q:`Use α = ${n(a1)} y C_máx = ${n(M1)} mg/L. ¿Cuál es el valle en estado estacionario?`,v:mn1,u:"mg/L",x:`C_mín = α·C_máx = ${n(mn1)}. Comprueba: C_máx − C_mín = D/Vd.`},
+    {k:"ngml",q:`Exprese ese valle (${n(mn1)} mg/L) en ng/mL.`,v:mn1*1000,u:"ng/mL",x:"1 mg/L = 1000 ng/mL."},
+    {k:"alfa2",q:`Si el intervalo cambia a τ = ${t2} h, ¿cuál es el nuevo α?`,v:a2,u:"",x:`(½)^${m2} = ${n(a2)}.`},
+    {k:"Cmaxss2",q:`Use α = ${n(a2)}. ¿Cuál es el nuevo pico en estado estacionario?`,v:M2,u:"mg/L",x:`${n(c)}/${n(1-a2)} = ${n(M2)}. ${t2<t1?"Más seguido, más acumulación.":"Más espaciado, menos acumulación."}`},
+    {k:"ventana",q:`Con valles y picos ${n(mn1,2)}–${n(M1,2)} mg/L (τ = ${t1} h) y ${n(mn2,2)}–${n(M2,2)} mg/L (τ = ${t2} h), ¿qué esquema queda dentro de ${lo}–${hi} mg/L?`,o:opts,a:ans,x:"El valle se compara con el límite inferior y el pico con el superior."},
+    {k:"Dnueva",q:`Con τ = ${t1} h (α = ${n(a1)}), ¿qué dosis D haría que el valle estacionario fuera ${tgt} mg/L?`,v:Dn,u:"mg",x:`C_mín = α·(D/Vd)/(1 − α) ⇒ D = C_mín·Vd·(1 − α)/α = ${tgt}·${Vd}·${n(1-a1)}/${n(a1)} = ${n(Dn,2)}.`}
+  ]);
+}
+
+/* ===== 4. Dos compartimentos ===== */
+function gDos(){
+  const k10=R([0.1,0.2,0.25,0.3]), k12=R([0.1,0.2,0.3]), k21=R([0.05,0.1,0.15]), V1=R([5,10,20]), Rr=R([10,20,25,50]);
+  const T=-(k10+k12+k21), Dt=k10*k21, De=T*T-4*Dt, lf=(T-sq(De))/2, ls=(T+sq(De))/2;
+  const CL=k10*V1, Css=Rr/(k10*V1), A1=Rr/k10, A2=k12*A1/k21;
+  const mM=mcq("[[−(k10+k12), k21], [k12, −k21]]",["[[−k10, k21], [k12, −k21]]","[[−(k10+k12), k12], [k21, −k21]]","[[−(k10+k12), −k21], [k12, −(k21+k10)]]"]);
+  const mC=mcq("No: C_ss = R/(k10·V1) solo depende de la eliminación",["Sí: aumenta con k12","Sí: disminuye con k21","Depende de la dosis inicial"]);
+  const e=`Modelo de dos compartimentos: A1 (plasma, V1 = ${V1} L) y A2 (tejido). El fármaco pasa de A1 a A2 con k12 = ${k12} h⁻¹, vuelve con k21 = ${k21} h⁻¹ y se elimina solo desde A1 con k10 = ${k10} h⁻¹. A1′ = R − (k10 + k12)A1 + k21A2, A2′ = k12A1 − k21A2.`;
+  return armar("dos","Dos compartimentos",e,[
+    {k:"CL",q:"Calcule el aclaramiento CL.",v:CL,u:"L/h",x:`CL = k10·V1 = ${k10}·${V1} = ${n(CL)}.`},
+    {k:"matriz",q:"¿Cuál es la matriz M del sistema (sin infusión)?",o:mM.o,a:mM.a,x:"De A1 salen k10 y k12; a A1 entra k21·A2; a A2 entra k12·A1 y sale k21·A2."},
+    {k:"T",q:"Calcule la traza de M.",v:T,u:"h⁻¹",x:`T = −(k10 + k12) − k21 = ${n(T)}.`},
+    {k:"D",q:"Calcule el determinante de M.",v:Dt,u:"h⁻²",x:`D = (k10 + k12)·k21 − k12·k21 = k10·k21 = ${n(Dt)}.`},
+    {k:"tipo",q:"¿Cómo se clasifica el equilibrio (0, 0) sin infusión?",o:CLS,a:0,x:`T < 0, D > 0 y Δ = ${n(De)} > 0: nodo estable. En compartimentos los valores propios son reales.`},
+    {k:"lrapido",q:`Use T = ${n(T)} y D = ${n(Dt)}. ¿Cuál es el valor propio rápido (el más negativo)?`,v:lf,u:"h⁻¹",x:`λ = (T − √Δ)/2 = (${n(T)} − ${n(sq(De))})/2 = ${n(lf)}.`},
+    {k:"llento",q:`Use T = ${n(T)} y D = ${n(Dt)}. ¿Cuál es el valor propio lento?`,v:ls,u:"h⁻¹",x:`λ = (T + √Δ)/2 = (${n(T)} + ${n(sq(De))})/2 = ${n(ls)}.`},
+    {k:"thR",q:`Use λ rápido = ${n(lf)} h⁻¹. ¿Cuál es la vida media de la fase rápida (distribución)?`,v:ln(2)/-lf,u:"h",x:`t½ = ln2/|λ| = ${n(ln(2)/-lf)}.`},
+    {k:"thL",q:`Use λ lento = ${n(ls)} h⁻¹. ¿Cuál es la vida media de la fase lenta (eliminación)?`,v:ln(2)/-ls,u:"h",x:`t½ = ln2/|λ| = ${n(ln(2)/-ls)}.`},
+    {k:"Css",q:`Con una infusión R = ${Rr} mg/h, ¿cuál es la concentración plasmática de estado estacionario?`,v:Css,u:"mg/L",x:`C_ss = R/(k10·V1) = ${Rr}/${n(k10*V1)} = ${n(Css)}.`},
+    {k:"A1",q:`Con R = ${Rr} mg/h, ¿cuál es A1 en el equilibrio?`,v:A1,u:"mg",x:`Sumando las ecuaciones: R = k10·A1, así que A1 = ${Rr}/${k10} = ${n(A1)}.`},
+    {k:"A2",q:`Use A1 = ${n(A1)} mg. ¿Cuál es A2 en el equilibrio?`,v:A2,u:"mg",x:`A2′ = 0: A2 = k12·A1/k21 = ${n(A2)}.`},
+    {k:"thSolo",q:"¿Qué vida media estimaría alguien que ignore la distribución y use solo k10?",v:ln(2)/k10,u:"h",x:`ln2/k10 = ${n(ln(2)/k10)}. Compárela con la fase lenta.`}
+  ]);
+}
+
+/* ===== 5. SIR y SEIR ===== */
+const EPI=[{nom:"SIR"},{nom:"SIR sin /N",mass:true},{nom:"SIR con muertes",xI:"δ"},{nom:"SIS",sis:true},{nom:"SIRS con muertes",xI:"δ",sirs:true},{nom:"SEIR",E:true},{nom:"SEIR con cuarentena",E:true,xI:"q"},{nom:"SEIR sin /N",E:true,mass:true},{nom:"SEIR con muertes en E e I",E:true,xI:"µ",muE:true}];
+function gEpi(vi){
+  const v=vi===undefined?R(EPI):EPI[vi];
+  const N=R([1000,2000,5000,10000]), I0=R([5,10,20,25]), E0=v.E?R([10,15,30,40]):0;
+  const Rr0=v.sis?0:(v.sirs?R([50,100]):R([0,0,30,50]));
+  const g=R([.1,.2,.25]), x=v.xI?R([.05,.1]):0, sg=R([.2,.25,.5]), w=R([.02,.05]);
+  const den=g+x, fe=v.muE?sg/(sg+x):1, top=v.mass?N:1;
+  let beta=R([1.5,2,2.5,3,4])*den/fe/top; beta=v.mass?+beta.toPrecision(2):+beta.toFixed(3);
+  const R0=beta*top*fe/den, S0=N-E0-I0-Rr0, inc=v.mass?beta*S0*I0:beta*S0*I0/N;
+  const dS=-inc+(v.sis?g*I0:0)+(v.sirs?w*Rr0:0), dE=inc-(sg+(v.muE?x:0))*E0, dI=(v.E?sg*E0:inc)-den*I0;
+  const incS=v.mass?"βSI":"βSI/N", denStr=v.xI?`γ + ${v.xI}`:"γ";
+  const eqs=[`S′ = −${incS}${v.sis?" + γI":""}${v.sirs?" + ωR":""}`];
+  if(v.E) eqs.push(`E′ = ${incS} − σE${v.muE?" − µE":""}`);
+  eqs.push(`I′ = ${v.E?"σE":incS} − γI${v.xI?` − ${v.xI}I`:""}`);
+  if(!v.sis) eqs.push(`R′ = γI${v.sirs?" − ωR":""}${v.muE?" − µR":""}`);
+  const par=[`β = ${n(beta,4)}${v.mass?" (persona·día)⁻¹":""}`]; if(v.E)par.push(`σ = ${sg}`); par.push(`γ = ${g}`); if(v.xI)par.push(`${v.xI} = ${x}`); if(v.sirs)par.push(`ω = ${w}`);
+  const incTxt=v.mass?`${n(beta)}·${S0}·${I0}`:`${n(beta)}·${S0}·${I0}/${N}`;
+  const qA=R([0.3,0.4,0.5]), bA=R([0.1,0.2,0.3]), dA=R([3,4,5]), bI=R([0.4,0.5,0.6]), dI2=R([4,5,7]), R0r=qA*bA*dA+(1-qA)*bI*dI2;
+  const va=R([0.3,0.5]), vb=R([0.3,0.5]), vg=R([0.1,0.2]), vm=R([0.1,0.2]), vr=R([1,2,4]), K12=va*vb/vm, K21=va*vb*vr/vg, R0v=sq(K12*K21);
+  const fS=R([0.5,0.6,0.75]);
+  const mF=mcq(`Solo el término ${incS}`,[`${incS} y también ${v.E?"σE":"γI"}`,v.E?"Solo σE":"Solo γI","Todos los términos de I′"]);
+  const st=[
+    {k:"S0",q:"¿Cuánto vale S(0)?",v:S0,u:"personas",x:`Las salas suman N: S(0) = ${N}${v.E?` − ${E0}`:""} − ${I0}${v.sis?"":` − ${Rr0}`} = ${S0}.`},
+    {k:"tI",q:"¿Cuánto dura en promedio el periodo infeccioso?",v:1/den,u:"días",x:`Salidas de I: ${denStr}. Tiempo medio = 1/${n(den)} = ${n(1/den,3)}.`},
+    v.E?{k:"tE",q:"¿Cuánto dura en promedio la fase latente?",v:1/(sg+(v.muE?x:0)),u:"días",x:`1/(σ${v.muE?" + µ":""}) = ${n(1/(sg+(v.muE?x:0)),3)}.`}
+       :{k:"fracS",q:"¿Qué fracción de la población es susceptible al inicio?",v:S0/N,u:"",x:`S(0)/N = ${S0}/${N} = ${n(S0/N)}.`},
+    v.E?{k:"dE0",q:"Calcule E′(0).",v:dE,u:"personas/día",x:`Se reemplaza: ${incTxt} − ${n(sg+(v.muE?x:0))}·${E0} = ${n(dE)}.`}
+       :{k:"dS0",q:"Calcule S′(0).",v:dS,u:"personas/día",x:`Se reemplaza: S′(0) = −${incTxt}${v.sis?` + ${g}·${I0}`:""}${v.sirs?` + ${w}·${Rr0}`:""} = ${n(dS)}.`},
+    {k:"dI0",q:"Calcule I′(0).",v:dI,u:"personas/día",x:`I′(0) = ${v.E?`${sg}·${E0}`:incTxt} − ${n(den)}·${I0} = ${n(dI)}.`},
+    {k:"F",q:"En la matriz de próxima generación, ¿qué va en F?",o:mF.o,a:mF.a,x:"En F solo van los contagios nuevos (el término con β). Los cambios de sala y las salidas van en V."},
+    {k:"R0",q:"Calcule R₀.",v:R0,u:"",x:`Arriba: ${v.mass?`βN = ${n(beta*N)}`:`β = ${n(beta)}`}. Abajo: ${denStr} = ${n(den)}.${v.muE?` Factor σ/(σ+µ) = ${n(fe)}.`:""}${(v.sis||v.sirs)?" Lo que vuelve a S no cuenta.":""} R₀ = ${n(R0,3)}.`},
+    {k:"R0rutas",q:`Otra enfermedad: cada expuesto es asintomático con probabilidad ${qA} (transmite ${bA} día⁻¹ durante ${dA} días) o sintomático (transmite ${bI} día⁻¹ durante ${dI2} días). Calcule R₀.`,v:R0r,u:"",x:`Suma de rutas: ${qA}·${bA}·${dA} + ${n(1-qA)}·${bI}·${dI2} = ${n(R0r,3)}.`},
+    {k:"betac",q:`Use R₀ = ${n(R0,3)}. ¿Bajo qué valor debe quedar β para que R₀ < 1?`,v:beta/R0,u:v.mass?"(persona·día)⁻¹":"día⁻¹",x:`R₀ es proporcional a β: β crítico = β/R₀ = ${n(beta)}/${n(R0,3)} = ${n(beta/R0)}.`},
+    {k:"R0vector",q:`Dengue: el mosquito pica ${va} veces/día, la probabilidad de transmisión es ${vb} en cada sentido, los humanos se recuperan a ${vg} día⁻¹, los mosquitos mueren a ${vm} día⁻¹ y hay ${vr} mosquitos por humano. Calcule R₀.`,v:R0v,u:"",x:`K₁₂ = a·b/µ = ${n(K12)} (humanos que infecta un mosquito) y K₂₁ = a·c·(Nv/Nh)/γ = ${n(K21)} (mosquitos que infecta un humano). R₀ = √(K₁₂·K₂₁) = ${n(R0v,3)}. La raíz aparece porque se necesitan dos pasos para cerrar el ciclo.`},
+    {k:"Reff",q:`Use R₀ = ${n(R0,3)}. Más adelante, el ${n(fS*100,0)} % de la población sigue susceptible. ¿Cuánto vale el número reproductivo efectivo?`,v:R0*fS,u:"",x:`R = R₀·S/N = ${n(R0,3)}·${fS} = ${n(R0*fS,3)}.`},
+    {k:"vacuna",q:`Use R₀ = ${n(R0,3)}. ¿Qué fracción hay que vacunar para frenar el brote? (como fracción, por ejemplo 0.6)`,v:1-1/R0,u:"",x:`p > 1 − 1/R₀ = ${n(1-1/R0,3)}.`},
+    {k:"pico",q:`Use R₀ = ${n(R0,3)}. ¿Con cuántos susceptibles deja de crecer la epidemia?`,v:N/R0,u:"personas",x:`El brote crece mientras R₀·S/N > 1: el umbral es S = N/R₀ = ${n(N/R0,1)}.`}
+  ];
+  return armar("epi",`Epidemia: ${v.nom}`,`Población N = ${N}; al inicio ${v.E?`${E0} expuestos, `:""}${I0} infecciosos${v.sis?"":` y ${Rr0} recuperados`}. Modelo: ${eqs.join("; ")}. Parámetros: ${par.join(", ")} (tasas en día⁻¹).`,st);
+}
+
+/* ===== 6. Glucosa e insulina ===== */
+function gGlu(){
+  const a=R([.01,.02]), d=R([.05,.1,.2]), G=R([80,90,100,120]), I=R([8,10,12,15,20]);
+  const p=R([1.5,2,2.5,3,4].filter(v=>v-a*G>=.4));
+  const b=(p-a*G)/(G*I), s=d*I/G, J11=-a-b*I, J12=-b*G, J21=s, J22=-d;
+  const tr=J11+J22, det=J11*J22-J12*J21, D=tr*tr-4*det, c=clasif(tr,det,D);
+  const nG=(pp,bb,ss)=>{const cc=bb*ss/d; return (-a+sq(a*a+4*cc*pp))/(2*cc);};
+  const Jt=`J = [[${n(J11)}, ${n(J12)}], [${n(J21)}, ${n(J22)}]]`, giv=`Use b = ${n(b)} y s = ${n(s)}.`;
+  const pool=[
+    {o:1,k:"J11",q:`${giv} Calcule J₁₁ = ∂G′/∂G en el equilibrio.`,v:J11,u:"min⁻¹",x:`−a − bI* = −${a} − ${n(b*I)} = ${n(J11)}. Tiene dos términos.`},
+    {o:2,k:"J12",q:`${giv} Calcule J₁₂ = ∂G′/∂I en el equilibrio.`,v:J12,u:"",x:`−bG* = ${n(J12)}. Va con G, no con I.`},
+    {o:3,k:"T",q:`${giv} Calcule la traza del Jacobiano.`,v:tr,u:"min⁻¹",x:`${Jt}. T = ${n(J11)} + (${n(J22)}) = ${n(tr)}.`},
+    {o:4,k:"D",q:`${giv} Calcule el determinante del Jacobiano.`,v:det,u:"min⁻²",x:`${Jt}. D = (${n(J11)})(${n(J22)}) − (${n(J12)})(${n(J21)}) = ${n(det)}. Menos por menos da más.`},
+    {o:5,k:"Delta",q:`Use T = ${n(tr)} y D = ${n(det)}. Calcule Δ.`,v:D,u:"",x:`Δ = T² − 4D = ${n(tr*tr,6)} − ${n(4*det,6)} = ${n(D,6)}.`},
+    {o:6,k:"tipo",q:`Use T = ${n(tr)} y D = ${n(det)}. ¿Cómo se clasifica el equilibrio?`,o_:CLS,a:c.a,x:c.x},
+    D<0?{o:7,k:"periodo",q:`Use Δ = ${n(D,6)}. ¿Cuál es el período de las oscilaciones?`,v:4*PI/sq(-D),u:"min",x:`4π/√(−Δ) = ${n(4*PI/sq(-D),1)}.`}
+       :{o:7,k:"lento",q:`Use T = ${n(tr)} y Δ = ${n(D,6)}. ¿Cuál es el valor propio lento?`,v:(tr+sq(D))/2,u:"min⁻¹",x:`(T + √Δ)/2 = ${n((tr+sq(D))/2)}. Estable: negativo.`},
+    {o:8,k:"nulcG",q:"¿Cuál es la nulclina de la glucosa (G′ = 0)?",o_:(m=>m)(mcq("I = (p − aG)/(bG)",["I = sG/d","G = p/a","I = (p − aG)/b"])),x:"G′ = 0 y se despeja I."},
+    {o:9,k:"pend",q:`Use s = ${n(s)}. ¿Cuál es la pendiente de la nulclina de la insulina?`,v:s/d,u:"",x:`I = (s/d)G: s/d = ${n(s/d)}. Chequeo: ${n(s/d)}·${G} = ${I}.`},
+    {o:10,k:"G0",q:`${giv} Tras una comida G = ${G+40} mg/dL e I = ${I}. ¿Cuánto vale G′ en ese instante?`,v:p-a*(G+40)-b*(G+40)*I,u:"mg/dL/min",x:`Se reemplaza: ${p} − ${a}·${G+40} − ${n(b)}·${G+40}·${I} = ${n(p-a*(G+40)-b*(G+40)*I)}.`},
+    {o:11,k:"tipo1",q:"Diabetes tipo 1 (s = 0): ¿cuál es la glucemia de equilibrio?",v:p/a,u:"mg/dL",x:`G* = p/a = ${n(p/a)}.`},
+    {o:12,k:"resist",q:`${giv} Si b cae a la mitad, ¿cuál es la nueva glucemia de ayuno?`,v:nG(p,b/2,s),u:"mg/dL",x:`c = (b/2)·s/d = ${n(b/2*s/d)}; G = (−a + √(a² + 4cp))/(2c) = ${n(nG(p,b/2,s),2)}. Tiene que subir.`},
+    {o:13,k:"secrec",q:`${giv} Si la secreción s cae a la mitad, ¿cuál es la nueva glucemia de ayuno?`,v:nG(p,b,s/2),u:"mg/dL",x:`c = b·(s/2)/d = ${n(b*s/2/d)}; G = ${n(nG(p,b,s/2),2)}.`},
+    {o:14,k:"dieta",q:`${giv} Si p aumenta a ${n(1.5*p)}, ¿cuál es la nueva glucemia de ayuno?`,v:nG(1.5*p,b,s),u:"mg/dL",x:`c = bs/d = ${n(b*s/d)}; G = ${n(nG(1.5*p,b,s),2)}.`},
+    {o:15,k:"concepto",q:"Con resistencia a la insulina (b disminuye), ¿qué pasa con el equilibrio?",o_:(m=>m)(mcq("G* sube e I* sube",["G* sube e I* baja","G* baja e I* sube","No cambian"])),x:"La glucosa sube, y como I* = (s/d)G*, la insulina también."}
+  ];
+  const pick=pickN(pool,11).sort((x,y)=>x.o-y.o);
+  const qs=[{k:"b",q:"Calcule b (sensibilidad a la insulina).",v:b,u:"mL/(µU·min)",x:`G′ = 0 en ayuno: b = (p − aG*)/(G*I*) = (${p} − ${n(a*G)})/(${G}·${I}) = ${n(b)}.`},
+            {k:"s",q:"Calcule s (secreción).",v:s,u:"",x:`I′ = 0: s = dI*/G* = ${d}·${I}/${G} = ${n(s)}.`}]
+    .concat(pick.map(x=>{const r={k:x.k,q:x.q,x:x.x}; if(x.o_){r.o=x.o_.o||x.o_;r.a=x.o_.a!==undefined?x.o_.a:x.a;} else {r.v=x.v;r.u=x.u;} return r;}));
+  return armar("glu","Glucosa e insulina",`G′ = p − aG − bGI, I′ = sG − dI (t en minutos). p = ${p} mg/dL/min, a = ${a} min⁻¹, d = ${d} min⁻¹. En ayuno G* = ${G} mg/dL e I* = ${I} µU/mL.`,qs);
+}
+
+/* ===== 7. Presión arterial ===== */
+function gPres(){
+  let a,b,k,t,d0,tr,det,D;
+  do{ a=R([0.5,1,1.5]); b=R([0.5,1,2]); k=R([0.5,1,1.5,2,3]); t=R([0.25,1/3,0.5,1,2]); d0=R([2,3,4,6,7]); tr=-a-1/t; det=(a+b*k)/t; D=tr*tr-4*det; }while(Math.abs(D)<1e-9);
+  const P=d0/(a+b*k), u=-k*P, c=clasif(tr,det,D), Pt=+(P*R([0.5,0.75])).toFixed(2), kt=(d0/Pt-a)/b;
+  const Pp=R([1,2,3,4]), up=R([0,-1,-2]), red=1-a/(a+b*k), kumb=((a+1/t)**2*t/4-a)/b;
+  const Jt=`J = [[${n(-a)}, ${b}], [${n(-k/t)}, ${n(-1/t)}]]`;
+  const pool=[
+    {o:1,k:"tau",q:"¿Qué valor de τ se usa, en minutos?",v:t,u:"min",x:`${seg(t)} = ${n(t)} min.`},
+    {o:2,k:"P",q:"Calcule P* en el equilibrio.",v:P,u:"mmHg",x:`u = −kP; P* = d₀/(a + bk) = ${d0}/${n(a+b*k)} = ${n(P)}. τ no entra.`},
+    {o:3,k:"u",q:`Use P* = ${n(P)}. Calcule u* en el equilibrio.`,v:u,u:"",x:`u* = −kP* = ${n(u)}.`},
+    {o:4,k:"dP",q:`En el punto P = ${Pp}, u = ${up}, ¿cuánto vale P′?`,v:-a*Pp+b*up+d0,u:"mmHg/min",x:`Se reemplaza: −${a}·${Pp} + ${b}·(${up}) + ${d0} = ${n(-a*Pp+b*up+d0)}.`},
+    {o:5,k:"du",q:`En el punto P = ${Pp}, u = ${up}, ¿cuánto vale u′?`,v:(-k*Pp-up)/t,u:"1/min",x:`u′ = (−kP − u)/τ = (${n(-k*Pp)} − (${up}))/${n(t)} = ${n((-k*Pp-up)/t)}. Al final se divide por τ.`},
+    {o:6,k:"nulc",q:"¿Cuál es la nulclina de P (P′ = 0)?",o_:mcq("u = (aP − d₀)/b",["u = −kP","P = d₀/(a + bk)","u = −kP/τ"]),x:"P′ = 0 y se despeja u. P* es un número, no una nulclina."},
+    {o:7,k:"J21",q:"Calcule J₂₁ = ∂u′/∂P.",v:-k/t,u:"1/min",x:`Primero se divide por τ: −k/τ = ${n(-k/t)}.`},
+    {o:8,k:"T",q:"Calcule la traza del Jacobiano.",v:tr,u:"1/min",x:`${Jt}. T = −a − 1/τ = ${n(tr)}. Siempre negativa.`},
+    {o:9,k:"D",q:"Calcule el determinante del Jacobiano.",v:det,u:"1/min²",x:`D = (a + bk)/τ = ${n(det)}.`},
+    {o:10,k:"tipo",q:`Use T = ${n(tr)} y D = ${n(det)}. ¿Cómo se clasifica el equilibrio?`,o_:{o:CLS,a:c.a},x:`Δ = ${n(D)}. ${c.x}`},
+    D<0?{o:11,k:"periodo",q:`Use Δ = ${n(D)}. ¿Cuál es el período de las oscilaciones?`,v:4*PI/sq(-D),u:"min",x:`4π/√(−Δ) = ${n(4*PI/sq(-D),3)}.`}
+       :{o:11,k:"lento",q:`Use T = ${n(tr)} y Δ = ${n(D)}. ¿Cuál es el valor propio lento?`,v:(tr+sq(D))/2,u:"1/min",x:`(T + √Δ)/2 = ${n((tr+sq(D))/2)}.`},
+    D<0?{o:12,k:"thalf",q:`Use T = ${n(tr)}. ¿Cuánto tarda la amplitud en bajar a la mitad?`,v:ln(2)/Math.abs(tr/2),u:"min",x:`r = T/2 = ${n(tr/2)}; t½ = ln2/|r| = ${n(ln(2)/Math.abs(tr/2))}.`}
+       :{o:12,k:"Delta",q:`Use T = ${n(tr)} y D = ${n(det)}. Calcule Δ.`,v:D,u:"",x:`Δ = T² − 4D = ${n(D)}.`},
+    {o:13,k:"kobj",q:`¿Qué ganancia k haría que P* fuera ${Pt} mmHg?`,v:kt,u:"",x:`${Pt} = ${d0}/(${a} + ${b}k) ⇒ k = (${d0}/${Pt} − ${a})/${b} = ${n(kt)}.`},
+    {o:14,k:"reduc",q:"¿En qué fracción reduce el barorreflejo la desviación P* respecto a no tener control (k = 0)? (como fracción, por ejemplo 0.75)",v:red,u:"",x:`Sin control P* = d₀/a; con control d₀/(a + bk). Reducción = 1 − a/(a + bk) = ${n(red)}.`},
+    {o:15,k:"ksilla",q:"¿Por debajo de qué valor de k el equilibrio se vuelve una silla?",v:-a/b,u:"",x:`D = (a + bk)/τ < 0 ⇔ k < −a/b = ${n(-a/b)}.`},
+    {o:16,k:"retiro",q:`Estando en el equilibrio (P* = ${n(P)}, u* = ${n(u)}), el estímulo d₀ desaparece de golpe. ¿Cuánto vale P′ en ese instante?`,v:-d0,u:"mmHg/min",x:`P′ = −aP* + bu* + 0 = −(a + bk)P* = −d₀ = ${-d0}.`},
+    {o:17,k:"tauCambia",q:"Si el barorreflejo se vuelve más lento (τ aumenta), ¿qué es cierto?",o_:mcq("P* no cambia; cambian la rapidez y las oscilaciones",["P* aumenta","P* disminuye","Nada cambia"]),x:"P* = d₀/(a + bk) no tiene τ."}
+  ];
+  if(kumb>0) pool.push({o:18,k:"kumb",q:"¿Por encima de qué ganancia k el regreso empieza a oscilar?",v:kumb,u:"",x:`Δ = 0: (a + 1/τ)² = 4(a + bk)/τ ⇒ k = [(a + 1/τ)²τ/4 − a]/b = ${n(kumb)}.`});
+  const pick=[pool[1]].concat(pickN(pool.filter((_,i)=>i!==1),12)).sort((x,y)=>x.o-y.o);
+  const qs=pick.map(x=>{const r={k:x.k,q:x.q,x:x.x}; if(x.o_){r.o=x.o_.o;r.a=x.o_.a;} else {r.v=x.v;r.u=x.u;} return r;});
+  return armar("pres","Presión arterial",`P′ = −aP + bu + d₀, τu′ = −kP − u, con t en minutos. a = ${a} min⁻¹, b = ${b}, k = ${k}, d₀ = ${d0} mmHg/min y una constante de tiempo de ${seg(t)}.`,qs);
+}
+
+/* ===== 8. Presión con fármaco (acoplado) ===== */
+function setupAcop(){
+  const S=R([{A:10,K:50,r:[15,20,25],rf:[12,15,20]},{A:20,K:100,r:[30,40,50],rf:[25,30,40]},{A:20,K:80,r:[30,40],rf:[25,30]}]);
+  const A=S.A,K=S.K,r1=R(S.r),r2=A+K-r1,c=r1*r2/K-A;
+  const a=R([1,2]),b=R([1,2]),k=R([1,2,3]),l=R([0.25,1/3,0.5,1,2]),d0=c*(a+b*k);
+  return {A,K,r1,r2,c,a,b,k,l,d0,rf:S.rf.filter(x=>x<r1)};
+}
+const Ep=(o,P)=>1+o.A/o.K-2*P/o.K;
+const raizMenor=(o,E)=>((o.A+o.K)-sq((o.A+o.K)**2-4*o.K*(o.A+E)))/2;
+function lam(l){return l<1?`${n(l*60,0)} minutos`:`${n(l)} horas`;}
+function gAcop(){
+  const o=setupAcop(); const {A,K,r1,r2,c,a,b,k,l,d0}=o;
+  const rf=R(o.rf), cf=rf*(A+K-rf)/K-A, EC=R([1,2,4]), mul=R([1,2,3,1/3]), y=EC*mul, H=y/(EC+y);
+  const gam=+((c-cf)*(a+b*k)/H).toFixed(2), cn=(d0-gam*H)/(a+b*k), Pn=raizMenor(o,cn);
+  const E1=Ep(o,r1), tr=-a*E1-1/l, det=(a+b*k)*E1/l, D=tr*tr-4*det, cl=clasif(tr,det,D);
+  const En=Ep(o,Pn), trn=-a*En-1/l, detn=(a+b*k)*En/l, Dn=trn*trn-4*detn, cln=clasif(trn,detn,Dn);
+  const pool=[
+    {o:1,k:"E",q:"Sin fármaco, ¿cuánto vale E(P*) en el equilibrio?",v:c,u:"mmHg",x:`u = −kE; E = d₀/(a + bk) = ${n(d0)}/${a+b*k} = ${n(c)}.`},
+    {o:2,k:"P",q:`Use E = ${n(c)}. ¿Cuál es el equilibrio menor P*?`,v:r1,u:"mmHg",x:`P² − ${A+K}P + ${n(K*(A+c))} = 0 → raíces ${r1} y ${r2}. Chequeo: (P* − A)(1 − P*/K) = ${n(c)}.`},
+    {o:3,k:"Pmayor",q:`Use E = ${n(c)}. ¿Cuál es el equilibrio mayor?`,v:r2,u:"mmHg",x:`La otra raíz: ${r2}. Las dos suman A + K = ${A+K}.`},
+    {o:4,k:"Ep",q:`Calcule E′(P*) en P* = ${r1}.`,v:E1,u:"",x:`E′ = 1 + A/K − 2P*/K = ${n(E1)}. Debe quedar entre 0 y ${n(1+A/K)}.`},
+    {o:5,k:"J21",q:`Use E′ = ${n(E1)}. Calcule J₂₁ = ∂u′/∂P.`,v:-k*E1/l,u:"1/h",x:`−k·E′/λ = −${k}·${n(E1)}/${n(l)} = ${n(-k*E1/l)}. λ en horas.`},
+    {o:6,k:"T",q:`Use E′ = ${n(E1)}. Calcule la traza.`,v:tr,u:"1/h",x:`T = −a·E′ − 1/λ = ${n(-a*E1)} + (${n(-1/l)}) = ${n(tr)}.`},
+    {o:7,k:"D",q:`Use E′ = ${n(E1)}. Calcule el determinante.`,v:det,u:"1/h²",x:`D = (a + bk)·E′/λ = ${n(det)}.`},
+    {o:8,k:"tipo",q:`Use T = ${n(tr)} y D = ${n(det)}. ¿Cómo se clasifica el equilibrio menor?`,o_:{o:CLS,a:cl.a},x:`Δ = ${n(D)}. ${cl.x}`},
+    D<0?{o:9,k:"periodo",q:`Use Δ = ${n(D)}. ¿Cuál es el período?`,v:4*PI/sq(-D),u:"h",x:`4π/√(−Δ) = ${n(4*PI/sq(-D),3)}.`}:{o:9,k:"lento",q:`Use T = ${n(tr)} y Δ = ${n(D)}. ¿Cuál es el valor propio lento?`,v:(tr+sq(D))/2,u:"1/h",x:`(T + √Δ)/2 = ${n((tr+sq(D))/2)}.`},
+    {o:10,k:"silla",q:`¿Qué es el equilibrio mayor (P = ${r2})?`,o_:mcq("Una silla: E′ < 0 da D < 0",["Un foco estable","Un nodo estable","No es admisible"]),x:`E′(${r2}) = ${n(Ep(o,r2))} < 0, así que D < 0.`},
+    {o:11,k:"unid",q:"Con t en horas y P, u en mmHg, ¿qué unidades tienen λ y k?",o_:mcq("λ en h y k adimensional",["λ en h⁻¹ y k en mmHg","λ adimensional y k en h","λ en mmHg·h y k en h⁻¹"]),x:"λu′ está en mmHg, así que λ va en horas; kE está en mmHg como E, así que k no tiene unidades."},
+    {o:12,k:"H",q:`Con y = ${n(y)} mg/L, ¿cuánto vale H(y)?`,v:H,u:"",x:`H = y/(EC₅₀ + y) = ${n(y)}/(${EC} + ${n(y)}) = ${n(H)}.`},
+    {o:13,k:"En",q:`Use H = ${n(H)}. ¿Cuánto vale el nuevo E?`,v:cn,u:"mmHg",x:`E = (d₀ − γH)/(a + bk) = (${n(d0)} − ${n(gam)}·${n(H)})/${a+b*k} = ${n(cn)}. γ multiplica a H.`},
+    {o:14,k:"Pn",q:`Use E = ${n(cn)}. ¿Cuál es el nuevo equilibrio menor?`,v:Pn,u:"mmHg",x:`P² − ${A+K}P + ${n(K*(A+cn))} = 0 → raíz menor ${n(Pn,2)}.`},
+    {o:15,k:"tipoN",q:`Use P* = ${n(Pn,2)}. ¿Cómo se clasifica el nuevo equilibrio?`,o_:{o:CLS,a:cln.a},x:`E′ = ${n(En)}, T = ${n(trn)}, D = ${n(detn)}, Δ = ${n(Dn)}. ${cln.x}`}
+  ];
+  const pick=[pool[0]].concat(pickN(pool.slice(1),12)).sort((x,y)=>x.o-y.o);
+  const qs=pick.map(x=>{const r={k:x.k,q:x.q,x:x.x}; if(x.o_){r.o=x.o_.o;r.a=x.o_.a;} else {r.v=x.v;r.u=x.u;} return r;});
+  return armar("acop","Presión con fármaco",`P′ = −a·E(P) + b·u + d₀ − γ·H(y), λu′ = −k·E(P) − u, E(P) = (P − A)(1 − P/K), H(y) = y/(EC₅₀ + y). t en horas. A = ${A}, K = ${K} mmHg, a = ${a} h⁻¹, b = ${b} h⁻¹, k = ${k}, λ = ${lam(l)}, d₀ = ${n(d0)} mmHg/h, γ = ${n(gam)} mmHg/h, EC₅₀ = ${EC} mg/L.`,qs);
+}
+
+/* ===== 9. Acoplamiento con dosis periódicas ===== */
+function gAcopDosis(){
+  const o=setupAcop(); const {A,K,c:E0,a,b,k,d0}=o;
+  const D=R([100,200,300]), Vd=R([20,25,50]), th=R([4,6,8,12]), m=R([1,2]), tau=th*m, ke=ln(2)/th, al=0.5**m, cc=D/Vd;
+  const Mx=cc/(1-al), Mn=al*Mx, EC=R([2,4,5]), Hx=Mx/(EC+Mx), Hn=Mn/(EC+Mn);
+  const gam=+(R([0.3,0.5])*d0/Hx).toFixed(2);
+  const En=(d0-gam*Hn)/(a+b*k), Ex=(d0-gam*Hx)/(a+b*k), Pn=raizMenor(o,En), Px=raizMenor(o,Ex), tEC=ln((cc+EC)/EC)/ke;
+  const e=`Un antihipertensivo se da en bolos IV de ${D} mg cada ${tau} h (Vd = ${Vd} L, t½ = ${th} h). Su efecto H(y) = y/(EC₅₀ + y), con EC₅₀ = ${EC} mg/L, entra al modelo de presión P′ = −a·E(P) + b·u + d₀ − γ·H, λu′ = −k·E − u, con E(P) = (P − A)(1 − P/K). A = ${A}, K = ${K} mmHg, a = ${a}, b = ${b}, k = ${k}, d₀ = ${n(d0)} mmHg/h y γ = ${n(gam)} mmHg/h.`;
+  return armar("acopd","Acoplamiento con dosis",e,[
+    {k:"ke",q:"Calcule κe.",v:ke,u:"h⁻¹",x:`ln2/${th} = ${n(ke)}.`},
+    {k:"alfa",q:"Calcule α para el intervalo dado.",v:al,u:"",x:`En ${tau} h caben ${m} vidas medias: (½)^${m} = ${n(al)}.`},
+    {k:"DVd",q:"¿Cuánto sube la concentración con cada bolo?",v:cc,u:"mg/L",x:`D/Vd = ${n(cc)}.`},
+    {k:"Cmax",q:`Use α = ${n(al)}. ¿Cuál es el pico en estado estacionario?`,v:Mx,u:"mg/L",x:`(D/Vd)/(1 − α) = ${n(Mx)}.`},
+    {k:"Cmin",q:`Use α = ${n(al)}. ¿Cuál es el valle en estado estacionario?`,v:Mn,u:"mg/L",x:`α·C_máx = ${n(Mn)}.`},
+    {k:"Hmax",q:`Use C_máx = ${n(Mx)} mg/L. ¿Cuánto vale H en el pico?`,v:Hx,u:"",x:`${n(Mx)}/(${EC} + ${n(Mx)}) = ${n(Hx)}.`},
+    {k:"Hmin",q:`Use C_mín = ${n(Mn)} mg/L. ¿Cuánto vale H en el valle?`,v:Hn,u:"",x:`${n(Mn)}/(${EC} + ${n(Mn)}) = ${n(Hn)}.`},
+    {k:"E0",q:"Sin fármaco, ¿cuánto vale E en el equilibrio?",v:E0,u:"mmHg",x:`d₀/(a + bk) = ${n(d0)}/${a+b*k} = ${n(E0)}.`},
+    {k:"Emin",q:`Use H = ${n(Hn)} (valle). ¿Cuánto vale E en el equilibrio?`,v:En,u:"mmHg",x:`(d₀ − γH)/(a + bk) = (${n(d0)} − ${n(gam*Hn)})/${a+b*k} = ${n(En)}.`},
+    {k:"Pmin",q:`Use E = ${n(En)}. ¿Cuál es el equilibrio menor de presión con el fármaco en el valle?`,v:Pn,u:"mmHg",x:`P² − ${A+K}P + ${n(K*(A+En))} = 0 → ${n(Pn,2)}.`},
+    {k:"Emax",q:`Use H = ${n(Hx)} (pico). ¿Cuánto vale E en el equilibrio?`,v:Ex,u:"mmHg",x:`(${n(d0)} − ${n(gam*Hx)})/${a+b*k} = ${n(Ex)}.`},
+    {k:"Pmax",q:`Use E = ${n(Ex)}. ¿Cuál es el equilibrio menor de presión con el fármaco en el pico?`,v:Px,u:"mmHg",x:`P² − ${A+K}P + ${n(K*(A+Ex))} = 0 → ${n(Px,2)}. Con más fármaco, menos presión.`},
+    {k:"tauEC",q:`¿Qué intervalo τ haría que el valle estacionario fuera igual a EC₅₀? Use D/Vd = ${n(cc)} mg/L y κe = ${n(ke)} h⁻¹.`,v:tEC,u:"h",x:`α/(1 − α)·D/Vd = EC₅₀ ⇒ α = EC₅₀/(D/Vd + EC₅₀) ⇒ τ = ln((D/Vd + EC₅₀)/EC₅₀)/κe = ${n(tEC)}.`}
+  ]);
+}
+
+const TOPICS=[
+  {id:"bal",nom:"Balance 1×1",g:gBal},{id:"pk",nom:"Farmacocinética",g:gPK},{id:"dosis",nom:"Dosis repetidas",g:gDosis},
+  {id:"dos",nom:"Dos compartimentos",g:gDos},{id:"epi",nom:"SIR y SEIR",g:()=>gEpi()},{id:"glu",nom:"Glucosa-insulina",g:gGlu},
+  {id:"pres",nom:"Presión arterial",g:gPres},{id:"acop",nom:"Presión con fármaco",g:gAcop},{id:"acopd",nom:"Acoplamiento con dosis",g:gAcopDosis}
+];
+const GRUPO1=["bal","pk","dosis","dos","epi","glu"], GRUPO2=["glu","pres","acop","acopd"];
+/*ENDGEN*/
+
+/* ================= estado y almacenamiento ================= */
+const KEY="p3app-v1";
+let S={stats:{},fall:[],hist:[],sel:"todos"};
+try{const r=JSON.parse(localStorage.getItem(KEY)||"null"); if(r) S=Object.assign(S,r);}catch(_){}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S));}catch(_){}};
+const $=id=>document.getElementById(id);
+const app=$("app");
+const topicName=id=>(TOPICS.find(t=>t.id===id)||{nom:id}).nom;
+function stat(tid,k){S.stats[tid]=S.stats[tid]||{n:0,ok:0,k:{}}; const t=S.stats[tid]; t.k[k]=t.k[k]||{n:0,ok:0}; return t;}
+function record(tid,k,ok){const t=stat(tid,k); t.n++; t.k[k].n++; if(ok){t.ok++;t.k[k].ok++;} save();}
+function parseNum(t){
+  const raw=String(t).trim(); const comma=/\d,\d/.test(raw);
+  let s=raw.replace(/\s/g,"").replace(",",".").replace(/−/g,"-").replace(/×10\^/,"e");
+  return {v:s?Number(s):NaN, comma};
+}
+function check(q,ans){
+  if(q.o) return ans===q.a;
+  const v=ans; const tol=Math.max(0.01*Math.abs(q.v),1e-9);
+  return Number.isFinite(v)&&Math.abs(v-q.v)<=tol;
+}
+const shown=q=>q.o?q.o[q.a]:n(q.v);
+
+/* reparto equilibrado: tema con menos intentos y, dentro del tema, el tipo de pregunta menos practicado */
+function elegirTema(){
+  const pool=S.sel==="todos"?TOPICS.map(t=>t.id):[S.sel];
+  const cnt=id=>(S.stats[id]||{n:0}).n; const min=Math.min(...pool.map(cnt));
+  return R(pool.filter(id=>cnt(id)===min));
+}
+function elegirPregunta(ex){
+  const st=S.stats[ex.id]||{k:{}}; const cnt=q=>((st.k||{})[q.k]||{n:0}).n;
+  const min=Math.min(...ex.qs.map(cnt)); return R(ex.qs.filter(q=>cnt(q)===min));
+}
+
+/* ================= pantallas ================= */
+function inicio(){
+  const tot=Object.values(S.stats).reduce((s,t)=>s+t.n,0), ok=Object.values(S.stats).reduce((s,t)=>s+t.ok,0);
+  app.innerHTML=`<h1>Parcial 3 · Práctica</h1>
+  <p class="muted">IBIO4111. Funciona sin internet. ${tot?`Llevas ${tot} preguntas, ${Math.round(100*ok/tot)} % correctas.`:"Aún no has practicado."}</p>
+  <div class="card"><h2>Modo viaje</h2><p class="muted">Una pregunta a la vez, con la respuesta y la explicación al instante. Reparte los temas y los pasos de forma pareja.</p>
+   <div class="row" id="chips"></div><button class="btn" id="bV">Empezar</button></div>
+  <div class="card"><h2>Simulacro de parcial</h2><p class="muted">2 ejercicios, 26 preguntas, una por página, sin volver atrás, 90 minutos. La nota al final.</p><button class="btn" id="bP">Empezar simulacro</button></div>
+  <div class="card"><h2>Repasar falladas</h2><p class="muted">${S.fall.length} preguntas guardadas. Cada acierto la saca de la lista.</p><button class="btn ghost" id="bF" ${S.fall.length?"":"disabled"}>Repasar</button></div>
+  <div class="card"><h2>Mi avance</h2><button class="btn ghost" id="bS">Ver por tema y por paso</button></div>
+  <p class="muted">Difusión y transporte se agregará cuando esté el material de la semana 14.</p>`;
+  const ch=$("chips"); [{id:"todos",nom:"Todos"}].concat(TOPICS).forEach(t=>{const b=document.createElement("button");b.className="chip";b.textContent=t.nom;b.setAttribute("aria-pressed",String(S.sel===t.id));b.onclick=()=>{S.sel=t.id;save();inicio();};ch.appendChild(b);});
+  $("bV").onclick=viaje; $("bP").onclick=parcial; $("bF").onclick=repaso; $("bS").onclick=avance;
+}
+
+function vistaPregunta(ex,q,cab){
+  return `<div class="top"><span class="tag">${topicName(ex.id)} · Paso ${q.paso}</span>${cab||""}</div>
+  <div class="enun">${ex.e}</div>
+  <p class="q">${q.q}</p>
+  ${q.o?`<div class="opts" id="opts">${q.o.map((t,i)=>`<button class="opt" data-i="${i}" aria-pressed="false">${String.fromCharCode(97+i)}) ${t}</button>`).join("")}</div>`
+       :`<input type="text" id="inp" inputmode="decimal" autocomplete="off" autocapitalize="off" placeholder="Escribe el número"><span class="unit">${q.u?`Respuesta en ${q.u}`:"Sin unidades"}</span>`}`;
+}
+function leer(q){
+  if(q.o){const s=app.querySelector('.opt[aria-pressed="true"]'); return {ans:s?+s.dataset.i:null,comma:false};}
+  const p=parseNum($("inp").value); return {ans:p.v,comma:p.comma};
+}
+function activarOpts(){app.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{app.querySelectorAll(".opt").forEach(x=>x.setAttribute("aria-pressed","false"));b.setAttribute("aria-pressed","true");});}
+function marcar(q,ans){ if(!q.o) return; app.querySelectorAll(".opt").forEach(b=>{const i=+b.dataset.i; b.classList.remove("ok","bad"); if(i===q.a)b.classList.add("ok"); else if(i===ans)b.classList.add("bad");}); }
+
+function viaje(){
+  const tid=elegirTema(); const ex=TOPICS.find(t=>t.id===tid).g(); const q=elegirPregunta(ex);
+  unaPregunta(ex,q,()=>viaje(),"viaje");
+}
+function unaPregunta(ex,q,sig,modo){
+  app.innerHTML=`<div class="card">${vistaPregunta(ex,q,`<button class="chip" id="bH">Inicio</button>`)}
+   <button class="btn" id="bR">Revisar</button><div id="fb"></div></div>`;
+  activarOpts(); $("bH").onclick=inicio;
+  $("bR").onclick=()=>{
+    const r=leer(q); if(r.ans===null||(!q.o&&!Number.isFinite(r.ans))) return;
+    const ok=check(q,r.ans); record(ex.id,q.k,ok); marcar(q,r.ans);
+    if(modo==="viaje"&&!ok){S.fall.push({ex:{id:ex.id,e:ex.e},q}); if(S.fall.length>80)S.fall.shift(); save();}
+    if(modo==="repaso"&&ok){S.fall=S.fall.filter(z=>z.q.q!==q.q||z.ex.e!==ex.e); save();}
+    $("fb").innerHTML=`${r.comma?`<div class="fb warn"><strong>Ojo con la coma</strong>En el parcial se escribe con punto: ${String($("inp").value).replace(",",".")}</div>`:""}
+     <div class="fb ${ok?"ok":"bad"}"><strong>${ok?"Correcto":"Respuesta: "+shown(q)}</strong>${q.x}</div>`;
+    $("bR").textContent="Siguiente"; $("bR").onclick=sig;
+  };
+}
+function repaso(){
+  if(!S.fall.length) return inicio();
+  const z=S.fall[S.fall.length-1]; unaPregunta(z.ex,z.q,()=>{ if(S.fall.length&&S.fall[S.fall.length-1]===z){S.fall.unshift(S.fall.pop());save();} repaso(); },"repaso");
+}
+
+/* simulacro: 2 ejercicios × 13 preguntas, sin volver atrás */
+let P=null, timer=null;
+function parcial(){
+  const t1=R(GRUPO1), t2=R(GRUPO2.filter(x=>x!==t1));
+  const exs=[TOPICS.find(t=>t.id===t1).g(), TOPICS.find(t=>t.id===t2).g()];
+  P={exs,i:0,ans:[],fin:Date.now()+90*60*1000};
+  clearInterval(timer); timer=setInterval(()=>{const c=$("clk"); if(!c)return; const s=Math.max(0,Math.round((P.fin-Date.now())/1000)); c.textContent=`${String(Math.floor(s/60)).padStart(2,"0")}:${String(s%60).padStart(2,"0")}`; if(s===0){clearInterval(timer);resultado();}},1000);
+  pagina();
+}
+function pagina(){
+  if(P.i>=26) return resultado();
+  const ex=P.exs[P.i<13?0:1], q=ex.qs[P.i%13];
+  app.innerHTML=`<div class="top"><strong>Pregunta ${P.i+1} de 26 · Ejercicio ${P.i<13?1:2}</strong><span class="clock" id="clk">--:--</span></div>
+   <div class="card">${vistaPregunta(ex,q)}<button class="btn" id="bN">Responder y seguir</button><p class="muted">No se puede volver a esta pregunta.</p></div>`;
+  activarOpts();
+  $("bN").onclick=()=>{ const r=leer(q); P.ans.push({ex:ex.id,q,ans:r.ans,ok:r.ans!==null&&check(q,r.ans)}); record(ex.id,q.k,P.ans[P.ans.length-1].ok); P.i++; pagina(); };
+}
+function resultado(){
+  clearInterval(timer);
+  const pts=P.ans.reduce((s,a)=>s+(a.ok?50/13:0),0);
+  S.hist.push({fecha:new Date().toISOString().slice(0,10),pts:Math.round(pts),temas:P.exs.map(e=>e.id)}); save();
+  app.innerHTML=`<div class="card"><p class="score">${pts.toFixed(1)} / 100</p><p class="muted">${P.exs.map(e=>topicName(e.id)).join(" + ")} · ${P.ans.filter(a=>a.ok).length} de 26 correctas</p>
+   <button class="btn" id="bH">Volver al inicio</button></div>
+   ${P.ans.map((a,i)=>`<div class="card"><span class="tag">${i+1} · ${topicName(a.ex)} · Paso ${a.q.paso}</span><p class="q">${a.q.q}</p>
+     <div class="fb ${a.ok?"ok":"bad"}"><strong>${a.ok?"Correcto":`Tu respuesta: ${a.ans===null||(typeof a.ans==="number"&&!isFinite(a.ans))?"(vacía)":a.q.o?a.q.o[a.ans]:a.ans} · Correcta: ${shown(a.q)}`}</strong>${a.q.x}</div></div>`).join("")}`;
+  P.ans.filter(a=>!a.ok).forEach(a=>{const ex=P.exs.find(e=>e.id===a.ex); S.fall.push({ex:{id:ex.id,e:ex.e},q:a.q});}); while(S.fall.length>80)S.fall.shift(); save();
+  $("bH").onclick=inicio;
+}
+function avance(){
+  const rows=TOPICS.map(t=>{const s=S.stats[t.id]||{n:0,ok:0,k:{}}; const pc=s.n?Math.round(100*s.ok/s.n):0;
+    const peor=Object.entries(s.k||{}).filter(([,v])=>v.n>=2).sort((x,y)=>x[1].ok/x[1].n-y[1].ok/y[1].n).slice(0,3).map(([k,v])=>`${k} ${v.ok}/${v.n}`).join(", ");
+    return `<tr><td>${t.nom}<div class="bar"><i style="width:${pc}%"></i></div><span class="muted">${peor||""}</span></td><td class="n">${s.ok}/${s.n}</td></tr>`;}).join("");
+  app.innerHTML=`<div class="card"><h2>Mi avance</h2><table><tr><th>Tema (pasos más flojos)</th><th class="n">Bien</th></tr>${rows}</table>
+   <p class="muted">Simulacros: ${S.hist.map(h=>`${h.fecha}: ${h.pts}`).join(" · ")||"ninguno"}</p>
+   <button class="btn" id="bH">Volver</button><button class="btn ghost" id="bX">Borrar mi avance</button><div id="cx"></div></div>`;
+  $("bH").onclick=inicio;
+  $("bX").onclick=()=>{$("cx").innerHTML=`<p class="muted">¿Seguro? Se borran estadísticas, falladas y simulacros.</p><button class="btn" id="bY">Sí, borrar</button>`; $("bY").onclick=()=>{S={stats:{},fall:[],hist:[],sel:"todos"};save();inicio();};};
+}
+inicio();
+/* si la app se publica en https, guarda una copia para funcionar sin internet */
+if("serviceWorker" in navigator && location.protocol==="https:"){ navigator.serviceWorker.register("sw.js").catch(()=>{}); }
+</script>
+</body>
+</html>

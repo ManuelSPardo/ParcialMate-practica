@@ -1,0 +1,9 @@
+{
+  "name": "Parcial 3 · Práctica",
+  "short_name": "Parcial 3",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f5f7fa",
+  "theme_color": "#1f5fa8",
+  "icons": [{"src": "icono.png", "sizes": "180x180", "type": "image/png"}]
+}
